@@ -44,6 +44,41 @@ pipeline {
 	    // type    report-task.txt      	// to read a file
 	   // del /f report-task.txt            // delete file in windows batch command
        }
+	   
+	          stage('jfrog'){
+
+          steps{
+                script{
+                    def SERVER_ID = 'Artifactory-Server'
+                    def server = Artifactory.server SERVER_ID
+
+                    def uploadSpec = """{
+                        "files": [{
+                                    "pattern": "**/*.war",
+                                    "target": "example-repo-local"
+                        }]
+                    }"""
+
+                    server.upload(uploadSpec)
+                }
+            }
+        }//stage jfrog
+        stage('Download Oracle Authentic Server package') {
+            steps {
+                rtDownload (
+                        serverId: 'Artifactory-Server',
+                        spec: '''{
+                      "files": [
+                       {
+                         "pattern": "fin-authentic-eng-maven-releases/${OracleAuthenticServer}/*-oracle.zip",
+                          "target": "OracleAuthenticServer/"
+                        }
+                            ]
+                        }'''
+                )
+            }
+        }
+
    }
    
   post {
@@ -74,54 +109,3 @@ pipeline {
         }
    }
 }
-pipeline {
-    agent any
-
-    stages {
-        
-        stage('create'){
-            steps{
-                script{
-                    sh'''
-                    touch test.war
-                    '''
-                }
-            }
-        }
-        stage('jfrog'){
-		
-            
-            steps{
-                script{
-                    def SERVER_ID = 'Artifactory-Server'
-                    def server = Artifactory.server SERVER_ID
-                    
-                    def uploadSpec = """{
-                        "files": [{
-                                    "pattern": "*.war",
-                                    "target": "example-repo-local"
-                        }]
-                    }"""
-                    
-                    server.upload(uploadSpec)
-                }
-            }
-        }//stage jfrog
-                stage('Download Oracle Authentic Server package') {
-            steps {
-                rtDownload (
-                  serverId: 'Jfrog-NCR',
-                  spec: '''{
-                      "files": [
-                       {
-                         "pattern": "fin-authentic-eng-maven-releases/${OracleAuthenticServer}/*-oracle.zip",
-                          "target": "OracleAuthenticServer/"
-                        }
-                            ]
-                        }'''
-                    )
-                }
-            }
-        }
-    }
-
